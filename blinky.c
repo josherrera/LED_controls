@@ -43,11 +43,21 @@ int main(){
       1/80Mhz = 12.6nS, 12,5*3= 37,5nS. 37,5*13333333=0.5 seconds
 
   */
+
+  //Start of statements added for the input/switch
+  uint8_t i=0;
+  HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
+  HWREG(GPIO_PORTF_BASE+GPIO_O_CR) |= 0x01;
+  GPIOPinTypeGPIOInput(GPIO_PORTF_BASE,GPIO_PIN_0);
+  //End of statements added for the input/switch
+
   while(1){
-          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, GPIO_PIN_2);
-          SysCtlDelay(13333333);
-          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, 0);
-          SysCtlDelay(13333333);
+      if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0) != GPIO_PIN_0)
+        {
+              GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, GPIO_PIN_2);
+              SysCtlDelay(13333333);
+
+        }
       }
 
 }
