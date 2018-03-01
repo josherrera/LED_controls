@@ -31,7 +31,7 @@ int main(){
   SysCtlDelay(3);
 
   //Set the pin of your choise to output
-  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
+  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
 
   /*
     Here it blinks the LED with a 0.5 seconds interval.
@@ -44,9 +44,9 @@ int main(){
 
   */
   while(1){
-          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1, GPIO_PIN_1);
+          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, GPIO_PIN_2);
           SysCtlDelay(13333333);
-          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1, 0);
+          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, 0);
           SysCtlDelay(13333333);
       }
 
