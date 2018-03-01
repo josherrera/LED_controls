@@ -1,112 +1,53 @@
-//*****************************************************************************
-//
-// blinky.c - Simple example to blink the on-board LED.
-//
-// Copyright (c) 2012-2017 Texas Instruments Incorporated.  All rights reserved.
-// Software License Agreement
-// 
-// Texas Instruments (TI) is supplying this software for use solely and
-// exclusively on TI's microcontroller products. The software is owned by
-// TI and/or its suppliers, and is protected under applicable copyright
-// laws. You may not combine this software with "viral" open-source
-// software in order to form a larger program.
-// 
-// THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
-// NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
-// NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
-// CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
-// DAMAGES, FOR ANY REASON WHATSOEVER.
-// 
-// This is part of revision 2.1.4.178 of the EK-TM4C123GXL Firmware Package.
-//
-//*****************************************************************************
-
 #include <stdint.h>
 #include <stdbool.h>
-#include "inc/hw_memmap.h"
-#include "driverlib/debug.h"
-#include "driverlib/gpio.h"
+#include "inc/hw_types.h"
+#include "inc/hw_gpio.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/sysctl.c"
 #include "driverlib/sysctl.h"
+#include "driverlib/gpio.c"
+#include "driverlib/gpio.h"
 
-//*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>Blinky (blinky)</h1>
-//!
-//! A very simple example that blinks the on-board LED using direct register
-//! access.
-//
-//*****************************************************************************
+/*
+  This are to help if you want to change the pin you want to use so you don't
+  have to change it in the entire code
+*/
+#define LED_PERIPH SYSCTL_PERIPH_GPIOF
+#define LED_BASE GPIO_PORTF_BASE
+#define RED_LED GPIO_PIN_1
 
-//*****************************************************************************
-//
-// The error routine that is called if the driver library encounters an error.
-//
-//*****************************************************************************
-#ifdef DEBUG
-void
-__error__(char *pcFilename, uint32_t ui32Line)
-{
-    while(1);
-}
-#endif
 
-//*****************************************************************************
-//
-// Blink the on-board LED.
-//
-//*****************************************************************************
-int
-main(void)
-{
-    volatile uint32_t ui32Loop;
+int main(){
 
-    //
-    // Enable the GPIO port that is used for the on-board LED.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  //Set the system clock to 80Mhz
+  SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
 
-    //
-    // Check if the peripheral access is enabled.
-    //
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF))
-    {
-    }
+  /*
+    Enables the clock on the GPIO, or "turns on"
+    Also, delays for a bit since it's advised in the datasheet, i add problems
+    when i didn't have that delay.
+  */
+  SysCtlPeripheralEnable(LED_PERIPH);
+  SysCtlDelay(3);
 
-    //
-    // Enable the GPIO pin for the LED (PF3).  Set the direction as output, and
-    // enable the GPIO pin for digital function.
-    //
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
+  //Set the pin of your choise to output
+  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
 
-    //
-    // Loop forever.
-    //
-    while(1)
-    {
-        //
-        // Turn on the LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+  /*
+    Here it blinks the LED with a 0.5 seconds interval.
 
-        //
-        // Delay for a bit.
-        //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-        {
-        }
+    To set a GPIO to the state HIGH you need in the third parameter to be the name
+    of the pin, ex: GPIO_PIN_1. To set to LOW just write 0.
 
-        //
-        // Turn off the LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0x0);
+    SysCtlDelay math:
+      1/80Mhz = 12.6nS, 12,5*3= 37,5nS. 37,5*13333333=0.5 seconds
 
-        //
-        // Delay for a bit.
-        //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-        {
-        }
-    }
+  */
+  while(1){
+          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1, GPIO_PIN_1);
+          SysCtlDelay(13333333);
+          GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1, 0);
+          SysCtlDelay(13333333);
+      }
+
 }
