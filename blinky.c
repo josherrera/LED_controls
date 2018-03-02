@@ -16,6 +16,20 @@
 #define LED_BASE GPIO_PORTF_BASE
 #define RED_LED GPIO_PIN_1
 
+void PortFIntHandler()
+{
+    uint32_t status = 0; // unsigned int 32
+    status = GPIOIntStatus(GPIO_PORTF_BASE,true);
+    GPIOIntClear(GPIO_PORTF_BASE,status);
+
+    // Now detect if pin was interrupted and assign an action
+    if (( status & GPIO_INT_4,) == GPIO_INT_PIN_4)
+    {
+
+    }
+
+}
+
 
 int main(){
 
@@ -45,10 +59,11 @@ int main(){
   */
 
   //Start of statements added for the input/switch
-  uint8_t i=0;
-  HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
-  HWREG(GPIO_PORTF_BASE+GPIO_O_CR) |= 0x01;
-  GPIOPinTypeGPIOInput(GPIO_PORTF_BASE,GPIO_PIN_0);
+  GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
+  GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
+  GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_FALLING_EDGE); // configure type of interrupt: what part of the wave triggers it
+  GPIOIntRegister(GPIO_PORTF_BASE,PortFIntHandler); // calls the user-made interrupt handler function
+  GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_4); // enable interrupt handler
   //End of statements added for the input/switch
 
   while(1){
