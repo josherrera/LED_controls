@@ -8,71 +8,108 @@
 #include "driverlib/gpio.c"
 #include "driverlib/gpio.h"
 
+
 /*
-  This are to help if you want to change the pin you want to use so you don't
-  have to change it in the entire code
+  These defines help if you want to change the LED pin or the Button pin.
+  Remember if you change to a diferent GPIO you need to enable the system
+  clock on it
 */
 #define LED_PERIPH SYSCTL_PERIPH_GPIOF
 #define LED_BASE GPIO_PORTF_BASE
 #define RED_LED GPIO_PIN_1
 
-void PortFIntHandler()
-{
-    uint32_t status = 0; // unsigned int 32
-    status = GPIOIntStatus(GPIO_PORTF_BASE,true);
-    GPIOIntClear(GPIO_PORTF_BASE,status);
+#define Button_PERIPH SYSCTL_PERIPH_GPIOF
+#define ButtonBase GPIO_PORTF_BASE
+#define Button GPIO_PIN_4
+#define ButtonInt GPIO_INT_PIN_4
 
-    // Now detect if pin was interrupted and assign an action
-    if (( status & GPIO_INT_4,) == GPIO_INT_PIN_4)
-    {
+volatile uint8_t value=0;
 
-    }
+void PortFIntHandler(){
+  uint32_t status=0;
+
+  status = GPIOIntStatus(ButtonBase,true);
+  GPIOIntClear(ButtonBase,status);
+
+  if(status & ButtonInt == ButtonInt){
+    //Then there was a Button pin interrupt
+    uint8_t value=0;
+
+    value= GPIOPinRead(GPIO_PORTF_BASE,GPIO_PIN_4);
+
+    if( value==0)
+      state^=RED_LED;
+
+    GPIOPinWrite(LED_BASE,RED_LED, state);
+
+    /*
+      This delay is for deboucing but since it's in a interrupt it
+      should be used a better method that is faster
+    */
+    SysCtlDelay(7000000);
+
+
+  }
+
+
 
 }
 
 
-int main(){
 
-  //Set the system clock to 80Mhz
+
+
+
+int main(void)
+{
+
+ //Set the clock to 80Mhz
   SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
 
   /*
-    Enables the clock on the GPIO, or "turns on"
-    Also, delays for a bit since it's advised in the datasheet, i add problems
-    when i didn't have that delay.
+    No need to enable the button peripheral since it's the same as the LED
+    in this case
   */
   SysCtlPeripheralEnable(LED_PERIPH);
   SysCtlDelay(3);
 
-  //Set the pin of your choise to output
-  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
+  /*
+    Configure the switch on the left of the launchpad, GPIO_PIN_4 to a input with
+    internal pull-up.
+  */
+  GPIOPinTypeGPIOInput(ButtonBase, Button);
+  GPIOPadConfigSet(ButtonBase ,Button,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
+  GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_FALLING_EDGE);
+  GPIOIntRegister(GPIO_PORTF_BASE,PortFIntHandler);
+  GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
 
   /*
-    Here it blinks the LED with a 0.5 seconds interval.
-
-    To set a GPIO to the state HIGH you need in the third parameter to be the name
-    of the pin, ex: GPIO_PIN_1. To set to LOW just write 0.
-
-    SysCtlDelay math:
-      1/80Mhz = 12.6nS, 12,5*3= 37,5nS. 37,5*13333333=0.5 seconds
-
+    Configures the Red LED, GPIO_PIN_1, to output
   */
+  GPIOPinTypeGPIOOutput(LED_BASE, RED_LED);
 
-  //Start of statements added for the input/switch
-  GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
-  GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
-  GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_FALLING_EDGE); // configure type of interrupt: what part of the wave triggers it
-  GPIOIntRegister(GPIO_PORTF_BASE,PortFIntHandler); // calls the user-made interrupt handler function
-  GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_4); // enable interrupt handler
-  //End of statements added for the input/switch
 
+
+ /*
+  A variable is created to store the return value of GPIOPinRead and then checked
+ if it's 0 or not.The button when pressed, connected  the pin to the GND so it gives 0.
+
+ We use a variable "state" because in GPIOPinWrite we need to use GPIO_PIN_1 to set the pin HIGH.
+ So we XOR the state with GPIO_PIN_1 so it toggles the "state" every time the button is pressed.
+
+  The SysCtlDelay of about 0.25s is a rude way to avoid bouncing. The button being mechanical
+  doesn't give a perfect 1 and 0 signal, instead, to the "eyes" of the digital pin, it bounces
+  between 1 and 0 when you press it before stabilizing
+*/
+  uint32_t value=0;
+  uint8_t state=0;
   while(1){
-      if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0) != GPIO_PIN_0)
-        {
-              GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_2, GPIO_PIN_2);
-              SysCtlDelay(13333333);
+    value= GPIOPinRead(ButtonBase,Button);
+    if( value==0)
+      state^=RED_LED;
 
-        }
-      }
+    GPIOPinWrite(LED_BASE,RED_LED, state);
+    SysCtlDelay(7000000);
+  }
 
 }
